@@ -8,7 +8,7 @@ class Constants {
         val HTTPS = "https://"
         val BASE_API_URL = "opendata.cwb.gov.tw/api"
         val API_AUTHORIZATION = "CWB-1037E291-DD11-4922-A949-32452D0CBB8F"
-
+        val FRAGMENT_TAG = "fragment_tag"
         fun genHttpsBaseApiUrl(requestUrl: String): String {
             return HTTPS + BASE_API_URL + requestUrl + "Authorization=" + API_AUTHORIZATION
         }
