@@ -3,8 +3,6 @@ package project.chris.findweather
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
-import com.google.android.gms.common.ConnectionResult
-import com.google.android.gms.common.api.GoogleApiClient
 import project.chris.findweather.Network.WeatherAPIManager
 import java.util.concurrent.Executors
 

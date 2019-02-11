@@ -4,23 +4,35 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <LinearLayout
-        android:id="@+id/llIndicator"
-        android:layout_width="match_parent"
-        android:layout_height="50dip"
-        android:orientation="horizontal" />
 
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_height="match_parent"
         android:layout_weight="1">
 
         <android.support.v4.view.ViewPager
             android:id="@+id/vpContainer"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
-
     </FrameLayout>
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_gravity="center">
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_gravity="center">
+
+            <LinearLayout
+                android:id="@+id/llIndicator"
+                android:layout_width="wrap_content"
+                android:layout_height="50dp"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
+    </LinearLayout>
 
 </LinearLayout>

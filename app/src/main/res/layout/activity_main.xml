@@ -7,22 +7,8 @@
     android:orientation="vertical"
     tools:context="project.chris.findweather.MainActivity">
 
-    <!--<android.support.design.widget.TabLayout-->
-        <!--android:id="@+id/tlTab"-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--app:tabGravity="fill"-->
-        <!--app:tabIndicatorColor="@color/colorAccent"-->
-        <!--app:tabMode="fixed"-->
-        <!--app:tabTextColor="@color/colorPrimary" />-->
-
-    <!--<android.support.v4.view.ViewPager-->
-        <!--android:id="@+id/vpContainer"-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="match_parent" />
-        -->
     <FrameLayout
         android:id="@+id/flContainer"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent" />
 </LinearLayout>

@@ -19,7 +19,10 @@ class WeatherViewPagerAdapter : FragmentStatePagerAdapter {
     }
 
     override fun getItem(position: Int): Fragment {
-        return mFragmentHashMap[position][Constants.FRAGMENT_TAG] as Fragment
+        if (mFragmentHashMap.size==0)
+            return Fragment()
+        else
+            return mFragmentHashMap[position][Constants.FRAGMENT_TAG] as Fragment
     }
 
     override fun getItemPosition(`object`: Any?): Int {
@@ -27,7 +30,6 @@ class WeatherViewPagerAdapter : FragmentStatePagerAdapter {
     }
 
     override fun getCount(): Int {
-        Log.e("＊＊＊ " , mFragmentHashMap.size.toString())
         return if (mFragmentHashMap.size==0)
             1
         else
