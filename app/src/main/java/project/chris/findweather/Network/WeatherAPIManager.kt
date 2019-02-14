@@ -1,10 +1,8 @@
 package project.chris.findweather.Network
 
-import android.widget.Toast
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import project.chris.findweather.Constants
-import java.io.IOException
+import project.chris.findweather.Constants.Companion.API_KEY
 
 /**
  * Created by chris on 2019/2/4.
@@ -12,8 +10,9 @@ import java.io.IOException
 
 val okHttpClient: OkHttpClient = OkHttpClient()
 
-//一般天氣預報-今明 36 小時天氣預報"
-val GET_THIRTY_SIX_HOUR_CITY_DATA = "/v1/rest/datastore/F-C0032-001?"
+//經緯度查詢現在天氣
+const val Get_Current_Location_Weather = "https://api.openweathermap.org/data/2.5/weather?appid="
+const val Get_5Days_3Hours_Weather = "https://api.openweathermap.org/data/2.5/forecast?appid="
 
 object WeatherAPIManager : BaseAPIManager() {
 
@@ -22,14 +21,18 @@ object WeatherAPIManager : BaseAPIManager() {
         return Request.Builder().url(apiUrl).build()
     }
 
-    fun getThirtySixHourCityData(): Result<ThirtySixHourCityBean> {
-        val result = Result<ThirtySixHourCityBean>()
-        val url = Constants.genHttpsBaseApiUrl(GET_THIRTY_SIX_HOUR_CITY_DATA)
+    fun getCurrentLocationWeatherData(latitude: String, longitude: String): Result<CurrentLocationBean> {
+        val result = Result<CurrentLocationBean>()
+
+        val url = "$Get_Current_Location_Weather$API_KEY&lat=$latitude&lon=$longitude&units=metric"
+
         val response = okHttpClient.newCall(generateRequest(url)).execute().body().string()
-        val thirtySixHourCityBean = parser(response, ThirtySixHourCityBean::class.java)
-        if (thirtySixHourCityBean != null) {
+
+        val resultBean = parser(response, CurrentLocationBean::class.java)
+
+        if (resultBean != null) {
             result.isSuccess = true
-            result.resultBean = thirtySixHourCityBean
+            result.resultBean = resultBean
         } else {
             result.isSuccess = false
             result.resultBean = null
@@ -37,4 +40,23 @@ object WeatherAPIManager : BaseAPIManager() {
         return result
     }
 
+
+    fun get5Days3HoursWeatherData(latitude: String, longitude: String): Result<FiveDaysThreeHoursBean> {
+        val result = Result<FiveDaysThreeHoursBean>()
+
+        val url = "$Get_5Days_3Hours_Weather$API_KEY&lat=$latitude&lon=$longitude&units=metric"
+
+        val response = okHttpClient.newCall(generateRequest(url)).execute().body().string()
+
+        val resultBean = parser(response, FiveDaysThreeHoursBean::class.java)
+
+        if (resultBean != null) {
+            result.isSuccess = true
+            result.resultBean = resultBean
+        } else {
+            result.isSuccess = false
+            result.resultBean = null
+        }
+        return result
+    }
 }

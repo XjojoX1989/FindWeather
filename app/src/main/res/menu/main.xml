@@ -6,12 +6,12 @@
     <item
         android:id="@+id/action_add"
         android:orderInCategory="100"
-        android:title="添加"
+        android:title="新增地點"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/action_dele"
         android:orderInCategory="100"
-        android:title="删除"
+        android:title="删除此地點"
         app:showAsAction="never" />
 </menu>

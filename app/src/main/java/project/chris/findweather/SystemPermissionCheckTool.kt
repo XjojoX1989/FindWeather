@@ -13,7 +13,7 @@ import android.content.Intent
  * Created by chris on 2019/2/10.
  */
 object SystemPermissionCheckTool {
-    val MY_PERMISSIONS_ACCESS_FINE_LOCATION = 3
+    val MY_PERMISSIONS_ACCESS_FINE_LOCATION = 100
 
     fun checkAccessLocationState(context: Context?): Boolean {
         if (context == null)

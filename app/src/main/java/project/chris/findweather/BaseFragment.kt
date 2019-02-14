@@ -1,15 +1,17 @@
 package project.chris.findweather
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
-import android.content.IntentSender
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.location.Address
 import android.location.Geocoder
-import android.location.LocationManager
+import android.location.Location
+import android.os.Build
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v4.view.ViewPager
@@ -18,16 +20,16 @@ import java.util.*
 import android.util.Log
 import android.view.*
 import android.widget.TextView
-import com.google.android.gms.common.ConnectionResult
-import com.google.android.gms.common.GoogleApiAvailability
+import android.widget.Toast
 import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.location.LocationServices
+import project.chris.findweather.MVP.GPSWeatherDetailFragment
+import project.chris.findweather.Network.WeatherAPIManager
+import java.util.concurrent.Executors
 
 
-/**
- * Created by chris on 2019/2/5.
- */
-class WeatherFragment : Fragment(), LocationStatus {
+@Suppress("IMPLICIT_CAST_TO_ANY")
+class BaseFragment : Fragment(), LocationStatus {
 
 
     private lateinit var mPagerAdapter: WeatherViewPagerAdapter
@@ -42,34 +44,12 @@ class WeatherFragment : Fragment(), LocationStatus {
     private lateinit var mContext: Context
     private lateinit var mActivity: Activity
     var googleApiClient: GoogleApiClient? = null
-    val REQUEST_LOCATION_PERMISSION = 100
-
-    override fun onLocationReady(address: List<Address>) {
-        initialization(address[0].locality)
+    var address: MutableList<Address>? = null
+    override fun onLocationReady(location: Location, address: MutableList<Address>) {
+        initialization(location, address)
         if (mPagerAdapter.count > 0) {
             set(0)
         }
-    }
-
-    @SuppressLint("MissingPermission")
-    private fun startLocationTask() {
-        val lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient)
-        if (lastLocation != null) {
-            Log.i("＊＊＊latitude", lastLocation.latitude.toString())
-            Log.i("＊＊＊longitude", lastLocation.longitude.toString())
-            val geoCoder = Geocoder(mContext, Locale.TRADITIONAL_CHINESE)
-            val address = geoCoder.getFromLocation(lastLocation.latitude, lastLocation.longitude, 1)
-            locationStatus.onLocationReady(address)
-
-        } else {
-            gpsStatusCheck()
-        }
-    }
-
-    private fun gpsStatusCheck() {
-        val locationManager = mActivity.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
-            showNoGPSAlert()
     }
 
     private fun showNoGPSAlert() {
@@ -88,10 +68,7 @@ class WeatherFragment : Fragment(), LocationStatus {
 
     val connectionCallback = object : GoogleApiClient.ConnectionCallbacks {
         override fun onConnected(p0: Bundle?) {
-            if (SystemPermissionCheckTool.checkAccessLocationState(mContext))
-                startLocationTask()
-            else
-                SystemPermissionCheckTool.checkLocationPermission(mContext, mActivity)
+            requestPermission()
         }
 
         override fun onConnectionSuspended(p0: Int) {
@@ -101,8 +78,49 @@ class WeatherFragment : Fragment(), LocationStatus {
         }
     }
 
+    private fun requestPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val hasPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                mActivity.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+            } else {
+                //do nothing
+            }
+            if (hasPermission != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                        SystemPermissionCheckTool.MY_PERMISSIONS_ACCESS_FINE_LOCATION)
+                return
+            }
+        }
+        processLocation()
+    }
+
+    var lastLocation: Location? = null
+    @SuppressLint("MissingPermission")
+    private fun processLocation() {
+        if (lastLocation == null) {
+            lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient)
+            if (lastLocation != null) {
+                val geoCoder = Geocoder(mContext, Locale.TRADITIONAL_CHINESE)
+                val address = geoCoder.getFromLocation(lastLocation!!.latitude, lastLocation!!.longitude, 1)
+                this.address = address
+                locationStatus.onLocationReady(lastLocation!!, address)
+            } else
+                showNoGPSAlert()
+        }
+    }
+
     private val onConnectionFailedListener = GoogleApiClient.OnConnectionFailedListener { result ->
         Log.i("＊＊＊", "Connection failed: ConnectionResult.getErrorCode() = " + result.errorCode)
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        if (requestCode == SystemPermissionCheckTool.MY_PERMISSIONS_ACCESS_FINE_LOCATION) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
+                processLocation()
+            else
+                showNoGPSAlert()
+        } else
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -137,7 +155,7 @@ class WeatherFragment : Fragment(), LocationStatus {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         Log.e("＊＊＊", "onCreateView start")
-        val mView = inflater.inflate(R.layout.viewpager_fragment, null)
+        val mView = inflater.inflate(R.layout.base_fragment, null)
         mViewPager = mView.findViewById(R.id.vpContainer)
         mLinearLayout = mView.findViewById(R.id.llIndicator)
         mPagerAdapter = WeatherViewPagerAdapter(fragmentManager, mFragmentList!!)
@@ -160,10 +178,13 @@ class WeatherFragment : Fragment(), LocationStatus {
         return mView
     }
 
-    private fun initialization(locality: String) {
-        val fragment = Fragment()
-        addView(fragment, loadIndicatorView(locality))
-
+    private fun initialization(location: Location, address: MutableList<Address>) {
+        addView(GPSWeatherDetailFragment.newInstance(
+                location.latitude.toString(),
+                location.longitude.toString(),
+                address[0].getAddressLine(0))
+                , loadIndicatorView(address[0].locality))
+        mPagerAdapter.notifyDataSetChanged()
     }
 
     private fun addView(fragment: Fragment, indicatorView: View) {
@@ -171,8 +192,6 @@ class WeatherFragment : Fragment(), LocationStatus {
         val uuid = UUID.randomUUID()
         map[UUID_TAG] = uuid
 
-        val bundle = Bundle()
-        fragment.arguments = bundle
         map[FRAGMENT_TAG] = fragment
 
         indicatorView.setBackgroundColor(Color.GRAY)
@@ -223,18 +242,16 @@ class WeatherFragment : Fragment(), LocationStatus {
 
         when (item.itemId) {
             R.id.action_add -> {
-                onActionAdd()
+                if (lastLocation != null)
+                    onActionAdd(lastLocation!!)
             }
-
             R.id.action_dele -> {
                 delete(mViewPager.currentItem)
                 set(mViewPager.currentItem)
             }
-
             else -> {
             }
         }
-
         return super.onOptionsItemSelected(item)
     }
 
@@ -253,39 +270,20 @@ class WeatherFragment : Fragment(), LocationStatus {
         inflater.inflate(R.menu.main, menu)
     }
 
-    private fun loadFragment(): Fragment {
-        return TestFragment()
-    }
-
     private fun loadIndicatorView(district: String): View {
         val tv = TextView(mContext)
-
         tv.gravity = Gravity.CENTER
         tv.text = district
+        tv.setTextColor(Color.WHITE)
         return tv
     }
 
-    protected fun onActionAdd() {
-        addView(loadFragment(), loadIndicatorView("測試區"))
+    protected fun onActionAdd(lastLocation: Location) {
+        addView(GPSWeatherDetailFragment.newInstance(
+                lastLocation.latitude.toString(),
+                lastLocation.longitude.toString(),
+                address!![0].getAddressLine(0)), loadIndicatorView("測試區"))
         mPagerAdapter.notifyDataSetChanged()
-    }
-
-    class TestFragment : Fragment() {
-
-        private val seq = Random().nextInt(20)
-
-        override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-
-            val tv = TextView(context)
-
-            var str = "Fragment Seq : $seq\n"
-            for (i in 0..499)
-                str = "$str$i--"
-            tv.setTextColor(Color.LTGRAY)
-            tv.text = str
-
-            return tv
-        }
     }
 
 }
