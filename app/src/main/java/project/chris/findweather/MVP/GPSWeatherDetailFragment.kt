@@ -3,9 +3,11 @@ package project.chris.findweather.MVP
 import android.annotation.SuppressLint
 import android.os.Bundle
 import android.support.v4.app.Fragment
+import android.support.v4.widget.SwipeRefreshLayout
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextClock
 import kotlinx.android.synthetic.main.gps_weather_fragment.*
 import project.chris.findweather.Constants
 import project.chris.findweather.MVP.presenter.WeatherDetailPresenter
@@ -25,6 +27,9 @@ import kotlin.collections.ArrayList
 class GPSWeatherDetailFragment : Fragment(), WeatherDetailView {
 
     private lateinit var presenter: WeatherDetailPresenter
+    private var address: String? = ""
+    private var lat: String? = ""
+    private var lon: String? = ""
 
     companion object {
         fun newInstance(lat: String, lon: String, address: String): GPSWeatherDetailFragment {
@@ -36,22 +41,51 @@ class GPSWeatherDetailFragment : Fragment(), WeatherDetailView {
             fragment.arguments = bundle
             return fragment
         }
+
     }
 
-    private var address: String = ""
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+        val view = inflater.inflate(R.layout.gps_weather_fragment, null)
         presenter = WeatherDetailPresenter(this, activity)
-        val lat = arguments.getString(Constants.LATITUDE)
-        val lon = arguments.getString(Constants.LONGITUDE)
+        lat = arguments.getString(Constants.LATITUDE)
+        lon = arguments.getString(Constants.LONGITUDE)
         address = arguments.getString(Constants.ADDRESS)
+        startLoadGPSWeatherTask(lat!!, lon!!)
+
+        setSwipeRefresh(view)
+        setTextClock(view)
+        return view
+    }
+
+    private fun setTextClock(view: View) {
+        (view.findViewById(R.id.textClock) as TextClock).format24Hour = "hh:mm aa"
+    }
+
+    private fun startLoadGPSWeatherTask(lat: String, lon: String) {
+        if (lat == "" || lon == "")
+            return
         presenter.getCurrentLocationWeatherFromAPI(lat, lon)
         presenter.getFiveDaysWeatherFromAPI(lat, lon)
-        return inflater.inflate(R.layout.gps_weather_fragment, null)
+    }
+
+    lateinit var swipeRefresh: SwipeRefreshLayout
+    private fun setSwipeRefresh(view: View) {
+        swipeRefresh = view.findViewById(R.id.swipeRefresh)
+        swipeRefresh.setColorSchemeResources(android.R.color.holo_red_light,
+                android.R.color.holo_blue_light,
+                android.R.color.holo_green_light,
+                android.R.color.holo_orange_light)
+        swipeRefresh.setOnRefreshListener {
+            swipeRefresh.isRefreshing = true
+            startLoadGPSWeatherTask(lat!!, lon!!)
+        }
+
     }
 
     @SuppressLint("SetTextI18n")
     override fun onCurrentLocationDataReceived(result: CurrentLocationBean?) {
         if (result != null) {
+            swipeRefresh.isRefreshing = false
             tvLocation.text = address
             tvUpdateDate.text = millisecondsToTimeFormat(result.getDt() * 1000.toLong(), "YYYY-MM-dd")
             tvCurrentDegree.text = DecimalFormat("#").format(result.getMain()!!.temp) + "°C"

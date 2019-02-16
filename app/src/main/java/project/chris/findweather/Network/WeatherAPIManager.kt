@@ -25,7 +25,6 @@ object WeatherAPIManager : BaseAPIManager() {
         val result = Result<CurrentLocationBean>()
 
         val url = "$Get_Current_Location_Weather$API_KEY&lat=$latitude&lon=$longitude&units=metric"
-
         val response = okHttpClient.newCall(generateRequest(url)).execute().body().string()
 
         val resultBean = parser(response, CurrentLocationBean::class.java)
@@ -45,7 +44,6 @@ object WeatherAPIManager : BaseAPIManager() {
         val result = Result<FiveDaysThreeHoursBean>()
 
         val url = "$Get_5Days_3Hours_Weather$API_KEY&lat=$latitude&lon=$longitude&units=metric"
-
         val response = okHttpClient.newCall(generateRequest(url)).execute().body().string()
 
         val resultBean = parser(response, FiveDaysThreeHoursBean::class.java)

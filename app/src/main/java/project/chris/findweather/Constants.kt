@@ -12,5 +12,7 @@ class Constants {
         const val LATITUDE = "latitude"
         const val LONGITUDE = "longitude"
         const val ADDRESS = "address"
+        const val CITY = "city"
+        const val GPS = "gps"
     }
 }

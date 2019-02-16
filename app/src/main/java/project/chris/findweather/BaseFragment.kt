@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
@@ -15,17 +16,18 @@ import android.os.Build
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v4.view.ViewPager
+import android.text.TextUtils
 import android.widget.LinearLayout
 import java.util.*
 import android.util.Log
 import android.view.*
+import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.location.LocationServices
 import project.chris.findweather.MVP.GPSWeatherDetailFragment
-import project.chris.findweather.Network.WeatherAPIManager
-import java.util.concurrent.Executors
+import project.chris.findweather.MVP.view.DesignatedCityFragment
 
 
 @Suppress("IMPLICIT_CAST_TO_ANY")
@@ -235,6 +237,7 @@ class BaseFragment : Fragment(), LocationStatus {
             else
                 view.setBackgroundColor(Color.GRAY)
         }
+
     }
 
 
@@ -242,8 +245,7 @@ class BaseFragment : Fragment(), LocationStatus {
 
         when (item.itemId) {
             R.id.action_add -> {
-                if (lastLocation != null)
-                    onActionAdd(lastLocation!!)
+                createSearchDialog()
             }
             R.id.action_dele -> {
                 delete(mViewPager.currentItem)
@@ -253,6 +255,24 @@ class BaseFragment : Fragment(), LocationStatus {
             }
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    private fun createSearchDialog() {
+        val searchView = LayoutInflater.from(context).inflate(R.layout.custom_dialog, null)
+        AlertDialog.Builder(context)
+                .setView(searchView)
+                .setPositiveButton("搜尋", DialogInterface.OnClickListener { dialog, which ->
+                    val etSearchCity = searchView.findViewById<EditText>(R.id.etSearchCity)
+                    val city = etSearchCity.text.toString()
+                    if (TextUtils.isEmpty(city))
+                        Toast.makeText(context, "請輸入搜尋城市或地區", Toast.LENGTH_SHORT).show();
+                    else
+                        onActionAdd(city)
+                })
+                .setNegativeButton("取消", DialogInterface.OnClickListener { dialog, which ->
+
+                })
+                .show()
     }
 
     private fun delete(currentItem: Int) {
@@ -278,12 +298,19 @@ class BaseFragment : Fragment(), LocationStatus {
         return tv
     }
 
-    protected fun onActionAdd(lastLocation: Location) {
+    protected fun onActionAdd(city: String) {
+        val latLonAddressTriple = getGeoInfoByCityName(city)
         addView(GPSWeatherDetailFragment.newInstance(
-                lastLocation.latitude.toString(),
-                lastLocation.longitude.toString(),
-                address!![0].getAddressLine(0)), loadIndicatorView("測試區"))
+                latLonAddressTriple.first, latLonAddressTriple.second, latLonAddressTriple.third), loadIndicatorView(city))
         mPagerAdapter.notifyDataSetChanged()
     }
 
+    private fun getGeoInfoByCityName(city: String): Triple<String, String, String> {
+        val gc = Geocoder(context);
+        val addresses = gc.getFromLocationName(city, 1); // get the found Address Objects
+        return Triple(addresses[0].latitude.toString(), addresses[0].longitude.toString(), addresses[0].getAddressLine(0))
+
+    }
+
+    annotation class inLineFunction
 }
