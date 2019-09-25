@@ -25,7 +25,7 @@
                 <ImageView
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:layout_marginLeft="30dp"
+                    android:layout_marginStart="30dp"
                     android:layout_marginTop="26dp"
                     android:alpha="0.5"
                     android:scaleType="fitStart"
@@ -84,7 +84,6 @@
                         android:layout_width="145dp"
                         android:layout_height="135dp"
                         android:layout_marginTop="88dp"
-                        android:src="@drawable/sunrise"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent" />
 

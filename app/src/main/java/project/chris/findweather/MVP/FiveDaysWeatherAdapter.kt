@@ -9,11 +9,13 @@ import android.view.ViewGroup
 import android.widget.BaseAdapter
 import android.widget.ImageView
 import android.widget.TextView
+import project.chris.findweather.Constants
 import project.chris.findweather.Network.FiveDaysThreeHoursBean
 import project.chris.findweather.R
 import java.text.DecimalFormat
 import java.text.ParseException
 import java.text.SimpleDateFormat
+import java.util.*
 
 /**
  * Created by chris on 2019/2/14.
@@ -36,6 +38,8 @@ class FiveDaysWeatherAdapter(var context: Context, var fiveDaysList: ArrayList<F
                 tvMaxMinTemp.text = DecimalFormat("#").format(fiveDaysList[position].main!!.temp_max + 1.0) + "/" + DecimalFormat("#").format(fiveDaysList[position].main!!.temp_min - 1.0) + "°C"
             if (fiveDaysList[position].weather != null && fiveDaysList[position].weather!![0].description != null)
                 tvWeatherCondition.text = fiveDaysList[position].weather!![0].description
+            if (fiveDaysList[position].weather != null && fiveDaysList[position].weather!![0].id != 0)
+                ivWeatherCondition.setImageDrawable(context.resources.getDrawable(Constants.getWeatherConditionIconId(fiveDaysList[position].weather!![0].id)))
         } else
             grid = convertView
         return grid
@@ -57,16 +61,14 @@ class FiveDaysWeatherAdapter(var context: Context, var fiveDaysList: ArrayList<F
     fun dateToDay(dateString: String): String {
         val dateStringFormat = SimpleDateFormat("yyyy-MM-dd hh:mm:ss")
         val date = dateStringFormat.parse(dateString)
-
-        val date2DayFormat = SimpleDateFormat("u")
-        return when (date2DayFormat.format(date)) {
-            "1" -> "星期一"
-            "2" -> "星期二"
-            "3" -> "星期三"
-            "4" -> "星期四"
-            "5" -> "星期五"
-            "6" -> "星期六"
-            "7" -> "星期日"
+        return when (date.toString().subSequence(0,3)) {
+            "Mon" -> "星期一"
+            "Tue" -> "星期二"
+            "Wed" -> "星期三"
+            "Thu" -> "星期四"
+            "Fri" -> "星期五"
+            "Sat" -> "星期六"
+            "Sun" -> "星期日"
             else -> ""
         }
     }

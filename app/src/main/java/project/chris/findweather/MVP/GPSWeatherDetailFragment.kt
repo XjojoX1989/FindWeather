@@ -15,6 +15,7 @@ import project.chris.findweather.MVP.view.WeatherDetailView
 import project.chris.findweather.Network.CurrentLocationBean
 import project.chris.findweather.Network.FiveDaysThreeHoursBean
 import project.chris.findweather.R
+import project.chris.findweather.WeatherBaseFragment
 import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.*
@@ -24,7 +25,12 @@ import kotlin.collections.ArrayList
 /**
  * Created by chris on 2019/2/12.
  */
-class GPSWeatherDetailFragment : Fragment(), WeatherDetailView {
+class GPSWeatherDetailFragment : WeatherBaseFragment(), WeatherDetailView {
+    override fun lazyLoad() {
+        if (!isViewVisible)
+            return
+        startLoadGPSWeatherTask(lat!!, lon!!)
+    }
 
     private lateinit var presenter: WeatherDetailPresenter
     private var address: String? = ""
@@ -46,12 +52,11 @@ class GPSWeatherDetailFragment : Fragment(), WeatherDetailView {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val view = inflater.inflate(R.layout.gps_weather_fragment, null)
-        presenter = WeatherDetailPresenter(this, activity)
+        presenter = WeatherDetailPresenter(this, activity, mContext)
         lat = arguments.getString(Constants.LATITUDE)
         lon = arguments.getString(Constants.LONGITUDE)
         address = arguments.getString(Constants.ADDRESS)
-        startLoadGPSWeatherTask(lat!!, lon!!)
-
+        lazyLoad()
         setSwipeRefresh(view)
         setTextClock(view)
         return view
@@ -83,11 +88,13 @@ class GPSWeatherDetailFragment : Fragment(), WeatherDetailView {
     }
 
     @SuppressLint("SetTextI18n")
-    override fun onCurrentLocationDataReceived(result: CurrentLocationBean?) {
+    override fun onCurrentLocationDataReceived(result: CurrentLocationBean?, weatherIconId: Int) {
         if (result != null) {
             swipeRefresh.isRefreshing = false
+            if(weatherIconId!=0)
+                ivCurrentWeather.setImageDrawable(mContext.resources.getDrawable(weatherIconId))
             tvLocation.text = address
-            tvUpdateDate.text = millisecondsToTimeFormat(result.getDt() * 1000.toLong(), "YYYY-MM-dd")
+            tvUpdateDate.text = millisecondsToTimeFormat(result.getDt() * 1000.toLong(), "yyyy-MM-dd")
             tvCurrentDegree.text = DecimalFormat("#").format(result.getMain()!!.temp) + "°C"
             tvHighLowDegree.text = DecimalFormat("#").format(result.getMain()!!.temp_max + 1.0) + "/" + DecimalFormat("#").format(result.getMain()!!.temp_min - 1.0) + "°C"
             tvBodyDegree.text = calculateTemp(result.getMain()!!.temp, result.getWind()!!.speed)
